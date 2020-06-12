@@ -17,15 +17,14 @@ gbdcd <- function(y,
   n_regions <- length(y)
   k_prob_prior <- ((1 - c)^(1:n_regions)) / sum((1 - c)^(1:n_regions))
   k_mean_prior <- round(sum((1:n_regions) * k_prob_prior))
-  sigma2_prior <- sigma_prior^2
-  sigma2 <- sigma2_prior
+  sigma2 <- sigma_prior^2
   a_0 <- 2.1 # Inverse Gamma shape parameter
   b_0 <- 1.1 # Inverse Gamma scale parameter
 
   n_coeffs <- dim(X)[2] # Number of estimated coefficients
-
-  # Teste para a variância a priori dos betas
-  sigma2_coeffs_prior <- sigma2_prior * diag(2)
+  
+  # Covariancia a priori dos betas (falta multiplicar pelo sigma2)
+  inv_lambda_identity_prior   <- diag(rep(1/lambda, n_coeffs))
 
   # Bookkeeping variables
   vec_k <- rep(NA, n_iterations)
@@ -74,20 +73,33 @@ gbdcd <- function(y,
       coeffs_mean_proposed <- auxiliar_proposed %*% crossprod(X_cluster, y_cluster)
       coeffs_cov_proposed <- sigma2 * auxiliar_proposed
 
-      mat_coeffs[new_center, ] <- mvtnorm::rmvnorm(1, mean = coeffs_mean_proposed, sigma = coeffs_cov_proposed)
+      mat_coeffs[new_center, ] <- mvtnorm::rmvnorm(1, 
+                                                   mean = coeffs_mean_proposed, 
+                                                   sigma = coeffs_cov_proposed)
 
-      phi <- mvtnorm::dmvnorm(mat_coeffs[new_center, ], mean = coeffs_mean_proposed, sigma = coeffs_cov_proposed)
-      phi_k_plus_1 <- mvtnorm::dmvnorm(mat_coeffs[new_center, ], mean = coeffs_mu_prior, sigma = sigma2_coeffs_prior)
+      phi <- mvtnorm::dmvnorm(mat_coeffs[new_center, ], 
+                              mean = coeffs_mean_proposed, 
+                              sigma = coeffs_cov_proposed, 
+                              log=TRUE)
+      
+      phi_k_plus_1 <- mvtnorm::dmvnorm(mat_coeffs[new_center, ], 
+                                       mean = coeffs_mu_prior, 
+                                       sigma = sigma2*inv_lambda_identity_prior, 
+                                       log=TRUE)
 
       # Define likelihood ratio and step acceptance probability
-      llk <- sum(dnorm(y, mean = rowSums(mat_coeffs[cluster_partitions, ] * X), sd = sqrt(sigma2), log = TRUE))
-      llk_plus_1 <- sum(dnorm(y, mean = rowSums(mat_coeffs[new_cluster_partitions, ] * X), sd = sqrt(sigma2), log = TRUE))
+      llk <- sum(dnorm(y, mean = rowSums(mat_coeffs[cluster_partitions, ] * X), 
+                       sd = sqrt(sigma2), 
+                       log = TRUE))
+      
+      llk_plus_1 <- sum(dnorm(y, mean = rowSums(mat_coeffs[new_cluster_partitions, ] * X), 
+                              sd = sqrt(sigma2), 
+                              log = TRUE))
+      
       llk_ratio <- exp(llk_plus_1 - llk)
-      accept_prob <- llk_ratio * (1 - c) * 1 * (phi_k_plus_1 / phi)
+      accept_prob <- llk_ratio * (1/(1-c)) * 1 * exp(phi - phi_k_minus_1)
 
-      if (is.na(accept_prob)) {
-        accept_prob <- 0
-      } # Handle errors on small probabilities
+      if (is.na(accept_prob)) { accept_prob <- 0 } # Handle errors on small probabilities
 
       alpha <- min(1, accept_prob)
 
@@ -113,18 +125,23 @@ gbdcd <- function(y,
       coeffs_mean_proposed <- auxiliar_proposed %*% crossprod(X_cluster, y_cluster)
       coeffs_cov_proposed <- sigma2 * auxiliar_proposed
 
-      phi <- mvtnorm::dmvnorm(mat_coeffs[center, ], mean = coeffs_mean_proposed, sigma = coeffs_cov_proposed)
-      phi_k_minus_1 <- mvtnorm::dmvnorm(mat_coeffs[center, ], mean = coeffs_mu_prior, sigma = sigma2_coeffs_prior)
+      phi <- mvtnorm::dmvnorm(mat_coeffs[center, ], 
+                              mean = coeffs_mean_proposed, 
+                              sigma = coeffs_cov_proposed, 
+                              log=TRUE)
+      
+      phi_k_minus_1 <- mvtnorm::dmvnorm(mat_coeffs[center, ], 
+                                        mean = coeffs_mu_prior, 
+                                        sigma = sigma2*inv_lambda_identity_prior, 
+                                        log=TRUE)
 
       # Define likelihood ratio and step acceptance probability
       llk <- sum(dnorm(y, mean = rowSums(mat_coeffs[cluster_partitions, ] * X), sd = sqrt(sigma2), log = TRUE))
       llk_minus_1 <- sum(dnorm(y, mean = rowSums(mat_coeffs[new_cluster_partitions, ] * X), sd = sqrt(sigma2), log = TRUE))
       llk_ratio <- exp(llk_minus_1 - llk)
-      accept_prob <- llk_ratio * (1 / (1 - c)) * 1 * (phi / phi_k_minus_1)
+      accept_prob <- llk_ratio * (1/(1-c)) * 1 * exp(phi - phi_k_minus_1)
 
-      if (is.na(accept_prob)) {
-        accept_prob <- 0
-      } # Handle errors on small probabilities
+      if (is.na(accept_prob)) { accept_prob <- 0 } # Handle errors on small probabilities
 
       alpha <- min(1, accept_prob)
 
