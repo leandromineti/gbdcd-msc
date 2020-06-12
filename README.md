@@ -1,2 +1,3 @@
-# gbdcd-msc
-Codebase for the gbdcd algorithm developed during my masters.
+# GBDCD
+
+Codebase for the gbdcd regression algorithm.
