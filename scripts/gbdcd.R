@@ -7,7 +7,8 @@ gbdcd <- function(y,
                   c = 0.35,
                   coeffs_mu_prior = rep(0, 2),
                   sigma_prior = sqrt(2),
-                  lambda = 0.001) {
+                  lambda = 0.001, 
+                  plot = TRUE) {
 
   # Test included because the partition function compilation takes time
   if (!exists("rcpp_partition", mode = "function")) source("scripts/partition.R")
@@ -187,25 +188,10 @@ gbdcd <- function(y,
   vec_accept <- vec_accept[seq.burn]
   vec_centers <- vec_centers[seq.burn]
 
-  # Plot results
-  plot(1:length(vec_k), vec_k, type = "l", xlab = "step", main = "k-MCMC")
-  barplot(table(vec_k) / sum(table(vec_k)), col = "light blue", main = "k-Posteriori")
-
-  cat("\n Estimates for k: \n")
-  print(summary(vec_k))
-  print(quantile(vec_k, probs = c(0.05, 0.95)))
-
-  cat("Step acceptance frequency: \n \n")
-  print(aggregate(vec_accept ~ vec_steps, FUN = mean))
-
   # Posteriors for the coefficients and credible intervals
   coeff_hat <- apply(mat_coeffs_hat, MARGIN = c(1, 2), FUN = median)
   coeff_lwr <- apply(mat_coeffs_hat, MARGIN = c(1, 2), FUN = function(x) quantile(x, probs = 0.05))
   coeff_upr <- apply(mat_coeffs_hat, MARGIN = c(1, 2), FUN = function(x) quantile(x, probs = 0.95))
-
-  cat("\n Estimates for sigma2: \n")
-  print(summary(vec_sigma2))
-  print(quantile(vec_sigma2, probs = c(0.05, 0.95)))
 
   # Processing 'connection' frequency matrix
   mat_connections <- mat_freq
@@ -216,7 +202,26 @@ gbdcd <- function(y,
 
   # Hierarchical clustering on 'connection' frequency data
   clusters <- hclust(as.dist(mat_connections), c("single", "complete")[1])
+  
+  # Plot results
+  if (plot == TRUE) {
+    
+  plot(1:length(vec_k), vec_k, type = "l", xlab = "step", main = "k-MCMC")
+  barplot(table(vec_k) / sum(table(vec_k)), col = "light blue", main = "k-Posteriori")
+  
+  cat("\n Estimates for k: \n")
+  print(summary(vec_k))
+  print(quantile(vec_k, probs = c(0.05, 0.95)))
+  
+  cat("\n Estimates for sigma2: \n")
+  print(summary(vec_sigma2))
+  print(quantile(vec_sigma2, probs = c(0.05, 0.95)))
+  
+  cat("Step acceptance frequency: \n \n")
+  print(aggregate(vec_accept ~ vec_steps, FUN = mean))
+  
   plot(clusters, ylab = "proximity", main = "Proximity Dendogram", xlab = "", cex = 0.7)
+  }
 
   output <- list(
     coeff.info = list(coeff_lwr, coeff_hat, coeff_upr),
