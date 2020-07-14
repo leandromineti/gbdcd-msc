@@ -97,7 +97,7 @@ gbdcd <- function(y,
                               log = TRUE))
       
       llk_ratio <- exp(llk_plus_1 - llk)
-      accept_prob <- llk_ratio * (1/(1-c)) * 1 * exp(phi - phi_k_minus_1)
+      accept_prob <- llk_ratio * (1/(1-c)) * 1 * exp(phi - phi_k_plus_1)
 
       if (is.na(accept_prob)) { accept_prob <- 0 } # Handle errors on small probabilities
 
