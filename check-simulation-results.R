@@ -26,13 +26,23 @@ df_cluster_4_c_0333 <- as.data.frame(get(load(file = './results/result_cluster_f
   mutate(hpd_includes_true_k = ((hpd_1 <= 4) & (4 <= hpd_2))) %>% 
   mutate(cluster_real_number = 4,
          priori_param = 0.333)
+df_cluster_4_big_c_0001 <- as.data.frame(get(load(file = './results/result_cluster_four_144_t_10_c_1_l_1e-06.RData'))) %>% 
+  mutate(hpd_includes_true_k = ((hpd_1 <= 4) & (4 <= hpd_2))) %>% 
+  mutate(cluster_real_number = 144,
+         priori_param = 0.001)
+df_cluster_4_big_c_0333 <- as.data.frame(get(load(file = './results/result_cluster_four_144_t_10_c_2_l_1e-06.RData'))) %>% 
+  mutate(hpd_includes_true_k = ((hpd_1 <= 4) & (4 <= hpd_2))) %>% 
+  mutate(cluster_real_number = 144,
+         priori_param = 0.333)
 
 df_results <- df_cluster_1_c_0001 %>% 
   bind_rows(df_cluster_1_c_0333) %>% 
   bind_rows(df_cluster_2_c_0001) %>% 
   bind_rows(df_cluster_2_c_0333) %>% 
   bind_rows(df_cluster_4_c_0001) %>% 
-  bind_rows(df_cluster_4_c_0333)
+  bind_rows(df_cluster_4_c_0333) %>% 
+  bind_rows(df_cluster_4_big_c_0001) %>% 
+  bind_rows(df_cluster_4_big_c_0333)
 
 df_final <- df_results %>% 
   group_by(cluster_real_number, priori_param) %>% 

@@ -8,7 +8,7 @@ library("plotly")
 source("scripts/gbdcd.R")
 
 # Load test dataset here
-load(file = sprintf("data/four/c_four_500.RData"))
+load(file = sprintf("data/four_144/c_four_144_50.RData"))
 
 X <- cbind(1, dt[, 2])
 y <- dt[, 1]
@@ -17,13 +17,13 @@ out <- gbdcd(
   y = y,
   X = X,
   viz = neighbors,
-  n_iterations = 1000000,
-  burn_in = 500000,
+  n_iterations = 100000,
+  burn_in = 50000,
   c = 0.001,
   coeffs_mu_prior = rep(0, 2),
   sigma_prior = 0.5,
   lambda = 1e-6,
-  plot = F
+  plot = T
 )
 
 k_hat_vector <- out$k.MCMC

@@ -11,7 +11,8 @@ source("scripts/gbdcd.R")
 
 # Simulation parameters
 number_of_tests <- 10
-cluster_types <- c("one", "diagonal", "four")
+#cluster_types <- c("one_64", "diagonal_64", "four_64", "four_144")
+cluster_types <- c("four_144")
 c_prioris <- c(0.001, 0.333)
 n_iterations <- 100000
 burn_in <- 50000
@@ -84,3 +85,5 @@ for (cluster_index in 1:length(cluster_types)) {
 }
 end_time <- Sys.time()
 end_time - start_time
+
+stopCluster(cl)
