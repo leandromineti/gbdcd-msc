@@ -1,6 +1,8 @@
 # Project files
 data/*
 sandbox/*
+results/*
+reports/*
 
 # Mac files
 .DS_Store
@@ -9,4 +11,3 @@ sandbox/*
 .Rhistory
 .Rproj.user/*
 *.Rproj
-
